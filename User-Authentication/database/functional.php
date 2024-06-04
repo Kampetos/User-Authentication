@@ -1,27 +1,26 @@
 <?php 
-  // call database
-  require "databaseConfig.php";
 
-  function connect(){
-      $mysqli = new mysqli( constant('SERVER'), constant('USERNAME'), constant('PASSWORD'), constant('DATABASE') );
+  require "databaseConfiguration.php";
 
-      if ($mysqli -> connect_errno != 0) {
-          $getErrorDate = date("d-M-Y");
-          $error = $mysqli -> connect_error;
-          $Message = " { $error } | { $getErrorDate } \r\n ";
-          file_put_contents( "log.txt", $Message, FILE_APPEND );
-          return false;
-        }else{
-          return $mysqli;
-        }
+  function connectToDatabase(){
+    $mysqli = new mysqli( constant('SERVER'), constant('USERNAME'), constant('PASSWORD'), constant('DATABASE') );
+
+    if ($mysqli -> connect_errno != 0) {
+        $getErrorDate = date("d-M-Y");
+        $error = $mysqli -> connect_error;
+        $Message = " { $error } | { $getErrorDate } \r\n ";
+        file_put_contents( "log.txt", $Message, FILE_APPEND );
+        return false;
+      }else{
+        return $mysqli;
+      }
   }
 
   function register( $Username , $Email, $religion, $gender, $phone, $address, $Password, $CofirmPassword ){
 
-    //configuration
-    $mysqli = connect();
+    $mysqli = connectToDatabase();
 
-    //field empty check
+    //CHECK IF FIELD ARE EMPTY
     $array = [ $Username , $Email, $religion, $gender, $phone, $address, $Password, $CofirmPassword ];
     foreach($array as $value){
       if (empty($value)){
@@ -29,7 +28,7 @@
       }
     }
 
-    //Email
+    //CHECK IF EMAIL IS EXISTS OR NOT
     if(!filter_var($Email, FILTER_VALIDATE_EMAIL)){
       return "email not valid";
     }
@@ -44,7 +43,7 @@
       return "Email already exists. Please use another email!";
     }
 
-    //Username
+    //CHECK IF USERNAME IS EXISTS OR NOT
     $Stat = $mysqli->prepare(" SELECT `username` FROM user WHERE `username` = ? ");
     $Stat->bind_param("s",$Username);
     $Stat->execute();
@@ -59,17 +58,18 @@
       return "username is way too long";
     }
 
-    //Password
+    //ENCRYPT PASSWORD
     if($Password != $CofirmPassword){
       return "Password Doesn't Match";
     }
 
     $securing = password_hash($Password, PASSWORD_BCRYPT);
 
-    //INSERT 
+    //INSERT DATA TO DATABASE
     $Stat = $mysqli->prepare(" INSERT INTO user ( `username`, `password`, `email`, `religion`, `gender`, `phoneNumber`, `address` ) VALUE( ?, ?, ?, ?, ?, ?, ? ) ");
     $Stat->bind_param("sssssss", $Username, $securing, $Email, $religion, $gender, $phone, $address );
     $Stat->execute();
+
     if ($Stat->affected_rows != 1){
       return "Oops... Something Error";
     }else{
@@ -78,47 +78,41 @@
   }
 
   function login($Email, $Password){
-    //configure
-    $mysqli = connect();
 
-    //check field empty
+    $mysqli = connectToDatabase();
+
+    //CHECK IF FIELD ARE EMPTY
     if ($Email == "" || $Password == ""){
       return "Both Field are required";
     }
 
-    //login with email and password
+    //TRY TO LOGIN WITH EMAIL AND PASSWORD
     $Stat = $mysqli->prepare(" SELECT `id`, `username`, `password`, `email`, `religion`, `gender`, `phoneNumber`, `address` FROM user WHERE `email` = ? ");
     $Stat->bind_param("s",$Email);
     $Stat->execute();
     $Stat->bind_result($id, $username, $storedPassword, $email, $religion, $gender, $handphone, $address);
   
-    if ($Stat->fetch()){
-      if (password_verify($Password, $storedPassword)){
-        $_SESSION['id']         = $id;
-        $_SESSION['username']   = $username;
-        $_SESSION['email']      = $email;
-        $_SESSION['religion']   = $religion;
-        $_SESSION['gender']     = $gender;
-        $_SESSION['handphone']  = $handphone;
-        $_SESSION['address']    = $address;
-
-        header("location: ../home/index.php");
-        exit();
-
-      }else{
-        return "opss.. your email or password is wrong";
-      }
-
-    }else{
+    if (!$Stat->fetch() || !password_verify($Password, $storedPassword)){
       return "opss.. your email or password is wrong";
     }
+
+    $_SESSION['id']         = $id;
+      $_SESSION['username']   = $username;
+      $_SESSION['email']      = $email;
+      $_SESSION['religion']   = $religion;
+      $_SESSION['gender']     = $gender;
+      $_SESSION['handphone']  = $handphone;
+      $_SESSION['address']    = $address;
+
+      header("location: ../home/index.php");
+      exit();
   }
 
   function update($id, $Username, $Email, $religion, $gender, $phone, $address){
-    //configuration
-    $mysqli = connect();
 
-    //field empty check
+    $mysqli = connectToDatabase();
+
+    //CHECK IF FIELD ARE EMPTY
     $array = [$id, $Username, $Email, $religion, $gender, $phone, $address ];
     foreach($array as $value){
       if (empty($value)){
@@ -126,7 +120,7 @@
       }
     }
 
-    //Email
+    //CHECK IF EMAIL IS EXISTS OR NOT
     if(!filter_var($Email, FILTER_VALIDATE_EMAIL)){
       return "email not valid";
     }
@@ -141,7 +135,7 @@
       return "Email already exists. Please use another email!";
     }
 
-    //Username
+    //CHECK IF USERNAME IS EXISTS OR NOT
     $Stat = $mysqli->prepare(" SELECT `username` FROM user WHERE `username` = ? ");
     $Stat->bind_param("s",$Username);
     $Stat->execute();
@@ -156,7 +150,7 @@
       return "username is way too long";
     }
 
-    //UPDATE 
+    //TRY TO UPDATE
     $Stat = $mysqli->prepare(" UPDATE user SET 
             `username`='$Username', 
             `email`='$Email', 
@@ -186,10 +180,9 @@
 
   function delete( $id ){
 
-    //configuration
-    $mysqli = connect();
+    $mysqli = connectToDatabase();
 
-    //DELETE ACCOUNT
+    //TRY TO DELETE ACCOUNT
     $Stat = $mysqli->prepare("DELETE FROM `user` WHERE id= ? ");
     $Stat->bind_param("s", $id );
     $Stat->execute();
@@ -205,15 +198,14 @@
 
   function logout(){
 
-    //delete value
     session_destroy();
 
-    //back to login page
     header('location: ../index.php');
     exit();
   }
 
-  function selected(array $arr, $check){
+  function giveSelectedOptions(array $arr, $check){
+
     $array = $arr;
       foreach($array as $id => $data ){
         $ids = $id + 1;

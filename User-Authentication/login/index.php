@@ -30,65 +30,8 @@ if (isset($_POST["Login"])){
 
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>login register</title>
-
-  <style>
-
-    body{
-      margin: 0;
-      background-color: black;
-    }
-
-    .container{
-      position: fixed;
-      width: 75%;
-      height: 600px;
-      margin: 0 auto;
-      top: 50%;
-      left: 50%;
-      transform: translate( -50%, -50% );
-      text-align: center;
-    }
-
-    .column{
-      width: 50%;
-      float: left;
-    }
-
-    .verticalLine{
-      margin: 0 auto;
-      height: 90%;
-      border-left: 3px solid white;
-      position: absolute;
-      left: 50%;
-      top: 5%;
-    }
-
-    input, button, select{
-      width: 75%;
-      height: 32px;
-      border-radius: 32px;
-      border: 0;
-    }
-
-    .error{
-      color: red;
-    }
-    button{
-      cursor: pointer;
-    }
-
-    .containerBackground{
-      position: absolute;
-      z-index: -1;
-      background-color: white;
-      border-radius: 32px;
-      opacity: 0.8;
-      width: 100%;
-      height: 100%;
-    }
-
-  </style>
+  <title>USER AUTHENTICATION</title>
+  <link rel="stylesheet" href="../css/style.css">
 
 </head>
 <body>
